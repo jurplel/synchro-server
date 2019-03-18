@@ -1,6 +1,7 @@
 #include "server.h"
 
 #include <QDebug>
+#include <QDataStream>
 
 Server::Server(QObject *parent) : QObject(parent)
 {
@@ -16,7 +17,8 @@ Server::Server(QObject *parent) : QObject(parent)
 void Server::clientConnected()
 {
     auto socket = server->nextPendingConnection();
-    socket->write("All systems nominal");
+    QDataStream send(socket);
+    send << static_cast<quint8>(command::pause);
 
     //add client to clientlist
     ClientObject newClient;

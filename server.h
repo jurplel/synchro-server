@@ -10,6 +10,12 @@ class Server : public QObject
 {
     Q_OBJECT
 
+    enum class command
+    {
+       pause
+    };
+    Q_ENUM(command)
+
     struct ClientObject
     {
         QTcpSocket *socket;
