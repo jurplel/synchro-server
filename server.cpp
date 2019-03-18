@@ -17,8 +17,13 @@ Server::Server(QObject *parent) : QObject(parent)
 void Server::clientConnected()
 {
     auto socket = server->nextPendingConnection();
-    QDataStream send(socket);
-    send << static_cast<quint8>(command::pause);
+    QByteArray dataBlock;
+    QDataStream dataBlockStream(dataBlock);
+    dataBlockStream << quint8(command::pause);
+    dataBlockStream.device()->seek(0);
+    dataBlockStream << quint16(sizeof(dataBlock) - sizeof(quint16));
+
+    socket->write(dataBlock);
 
     //add client to clientlist
     ClientObject newClient;
