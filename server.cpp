@@ -19,7 +19,7 @@ void Server::clientConnected()
     auto socket = server->nextPendingConnection();
     QByteArray dataBlock;
     QDataStream dataBlockStream(&dataBlock, QIODevice::WriteOnly);
-    dataBlockStream << quint8(command::pause);
+    dataBlockStream << quint16(0) << quint8(command::pause);
     dataBlockStream.device()->seek(0);
     dataBlockStream << quint16(sizeof(dataBlock) - sizeof(quint16));
 
