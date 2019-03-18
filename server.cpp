@@ -58,6 +58,7 @@ void Server::dataRecieved(int id)
     auto command = static_cast<Command>(numericCommand);
 
     qInfo() << "Recieved new data from" << id << ":" << command;
+    handleCommand(command, id);
 }
 
 void Server::handleCommand(Command command, int issuerId)
