@@ -10,6 +10,7 @@ class Server : public QObject
 {
     Q_OBJECT
 
+public:
     enum class command
     {
        pause
@@ -21,7 +22,6 @@ class Server : public QObject
         QTcpSocket *socket;
     };
 
-public:
     explicit Server(QObject *parent = nullptr);
 
     void clientConnected();
