@@ -19,7 +19,7 @@ void Server::clientConnected()
     auto socket = server->nextPendingConnection();
     QByteArray dataBlock;
     QDataStream dataBlockStream(&dataBlock, QIODevice::WriteOnly);
-    dataBlockStream << quint16(0) << quint8(command::pause);
+    dataBlockStream << quint16(0) << quint8(Command::Pause);
     dataBlockStream.device()->seek(0);
     dataBlockStream << quint16(dataBlock.size() - static_cast<int>(sizeof(quint16)));
 
@@ -28,6 +28,7 @@ void Server::clientConnected()
     //add client to clientlist
     ClientObject newClient;
     newClient.socket = socket;
+    newClient.incomingSize = 0;
 
     int id = nextClientId;
     clientList.insert(id, newClient);
@@ -50,5 +51,27 @@ void Server::clientDisconnected(int id)
 
 void Server::dataRecieved(int id)
 {
+    ClientObject cliObj = clientList.value(id);
 
+    if (!cliObj.incomingSize)
+    {
+        QByteArray data = cliObj.socket->read(2);
+        QDataStream dataStream(data);
+        dataStream >> cliObj.incomingSize;
+    }
+    qDebug() << cliObj.incomingSize;
+    qDebug() << cliObj.socket->bytesAvailable();
+    if (cliObj.socket->bytesAvailable() != cliObj.incomingSize)
+        return;
+
+    cliObj.incomingSize = 0;
+
+    QByteArray data = cliObj.socket->read(cliObj.incomingSize);
+    QDataStream dataStream(data);
+
+    quint8 numericCommand;
+    dataStream >> numericCommand;
+    auto command = static_cast<Command>(numericCommand);
+
+    qDebug() << "Recieved new data:" << command;
 }

@@ -11,16 +11,16 @@ class Server : public QObject
     Q_OBJECT
 
 public:
-    enum class command
+    enum class Command : quint8
     {
-       pause
+       Pause
     };
-    Q_ENUM(command)
+    Q_ENUM(Command)
 
     struct ClientObject
     {
         QTcpSocket *socket;
-        QByteArray buffer;
+        quint16 incomingSize;
     };
 
     explicit Server(QObject *parent = nullptr);
