@@ -27,7 +27,7 @@ void Server::clientConnected()
     //add client to clientlist
     ClientObject newClient;
     newClient.socket = socket;
-    newClient.in->setDevice(socket);
+    newClient.in = new QDataStream(socket);
     newClient.in->setVersion(QDataStream::Qt_5_9);
 
     int id = nextClientId;
