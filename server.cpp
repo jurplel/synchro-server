@@ -50,7 +50,8 @@ void Server::dataRecieved(int id)
 
     quint16 incomingData;
     quint8 numericCommand;
-    *cliObj.in >> incomingData >> numericCommand;
+    QVariant additionalData;
+    *cliObj.in >> incomingData >> numericCommand >> additionalData;
 
     if (!cliObj.in->commitTransaction())
         return;
@@ -58,11 +59,19 @@ void Server::dataRecieved(int id)
     auto command = static_cast<Command>(numericCommand);
 
     qInfo() << "Recieved new data from" << id << ":" << command;
-    handleCommand(command, id);
+
+    if (!additionalData.isNull() && additionalData.isValid())
+        handleCommand(id, command, additionalData);
+    else
+        handleCommand(id, command);
 }
 
-void Server::handleCommand(Command command, int issuerId)
+void Server::handleCommand(int issuerId, Command command, QVariant data)
 {
+    QByteArray dataBlock;
+    QDataStream dataBlockStream(&dataBlock, QIODevice::WriteOnly);
+    dataBlockStream << quint16(0);
+
     switch(command) {
     case Command::Pause: {
         foreach (int id, clientList.keys())
@@ -70,9 +79,7 @@ void Server::handleCommand(Command command, int issuerId)
             if (issuerId == id)
                 continue;
 
-            QByteArray dataBlock;
-            QDataStream dataBlockStream(&dataBlock, QIODevice::WriteOnly);
-            dataBlockStream << quint16(0) << quint8(Command::Pause);
+            dataBlockStream << quint8(Command::Pause);
             dataBlockStream.device()->seek(0);
             dataBlockStream << quint16(dataBlock.size() - static_cast<int>(sizeof(quint16)));
 
@@ -80,6 +87,20 @@ void Server::handleCommand(Command command, int issuerId)
             cliObj.socket->write(dataBlock);
         }
         break;
+    }
+    case Command::Seek: {
+        foreach (int id, clientList.keys())
+        {
+            if (issuerId == id)
+                continue;
+
+            dataBlockStream << quint8(Command::Pause) << data.toDouble();
+            dataBlockStream.device()->seek(0);
+            dataBlockStream << quint16(dataBlock.size() - static_cast<int>(sizeof(quint16)));
+
+            auto cliObj = clientList.value(id);
+            cliObj.socket->write(dataBlock);
+        }
     }
     }
 }

@@ -14,7 +14,8 @@ class Server : public QObject
 public:
     enum class Command : quint8
     {
-       Pause
+       Pause,
+       Seek
     };
     Q_ENUM(Command)
 
@@ -32,7 +33,7 @@ public:
 
     void dataRecieved(int id);
 
-    void handleCommand(Command command, int issuerId);
+    void handleCommand(int issuerId, Command command, QVariant data = QVariant());
 
 signals:
 
