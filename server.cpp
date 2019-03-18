@@ -21,7 +21,7 @@ void Server::clientConnected()
     QDataStream dataBlockStream(&dataBlock, QIODevice::WriteOnly);
     dataBlockStream << quint16(0) << quint8(command::pause);
     dataBlockStream.device()->seek(0);
-    dataBlockStream << quint16(sizeof(dataBlock) - sizeof(quint16));
+    dataBlockStream << quint16(dataBlock.size() - static_cast<int>(sizeof(quint16)));
 
     socket->write(dataBlock);
 
@@ -33,8 +33,9 @@ void Server::clientConnected()
     clientList.insert(id, newClient);
     nextClientId++;
 
-    //connect to discconection signal
-    connect(socket, &QTcpSocket::disconnected, this, [this, id]{ clientDisconnected(id); });
+    //make connections
+    connect(socket, &QTcpSocket::disconnected, [this, id]{ clientDisconnected(id); });
+    connect(socket, &QTcpSocket::readyRead, [this, id]{ dataRecieved(id); });
 
     //console message
     qInfo() << "Client" << id << "connected.";
@@ -45,4 +46,9 @@ void Server::clientDisconnected(int id)
     clientList.value(id).socket->deleteLater();
     clientList.remove(id);
     qInfo() << "Client" << id << "disconnected.";
+}
+
+void Server::dataRecieved(int id)
+{
+
 }

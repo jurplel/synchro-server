@@ -20,6 +20,7 @@ public:
     struct ClientObject
     {
         QTcpSocket *socket;
+        QByteArray buffer;
     };
 
     explicit Server(QObject *parent = nullptr);
@@ -27,6 +28,8 @@ public:
     void clientConnected();
 
     void clientDisconnected(int id);
+
+    void dataRecieved(int id);
 
 signals:
 
