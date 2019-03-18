@@ -1,7 +1,6 @@
 #include "server.h"
 
 #include <QDebug>
-#include <QDataStream>
 
 Server::Server(QObject *parent) : QObject(parent)
 {
@@ -28,7 +27,8 @@ void Server::clientConnected()
     //add client to clientlist
     ClientObject newClient;
     newClient.socket = socket;
-    newClient.incomingSize = 0;
+    newClient.in->setDevice(socket);
+    newClient.in->setVersion(QDataStream::Qt_5_9);
 
     int id = nextClientId;
     clientList.insert(id, newClient);
@@ -53,24 +53,15 @@ void Server::dataRecieved(int id)
 {
     ClientObject cliObj = clientList.value(id);
 
-    if (!cliObj.incomingSize)
-    {
-        QByteArray data = cliObj.socket->read(2);
-        QDataStream dataStream(data);
-        dataStream >> cliObj.incomingSize;
-    }
-    qDebug() << cliObj.incomingSize;
-    qDebug() << cliObj.socket->bytesAvailable();
-    if (cliObj.socket->bytesAvailable() != cliObj.incomingSize)
+    cliObj.in->startTransaction();
+
+    quint16 incomingData;
+    quint8 numericCommand;
+    *cliObj.in >> incomingData >> numericCommand;
+
+    if (!cliObj.in->commitTransaction())
         return;
 
-    cliObj.incomingSize = 0;
-
-    QByteArray data = cliObj.socket->read(cliObj.incomingSize);
-    QDataStream dataStream(data);
-
-    quint8 numericCommand;
-    dataStream >> numericCommand;
     auto command = static_cast<Command>(numericCommand);
 
     qDebug() << "Recieved new data:" << command;

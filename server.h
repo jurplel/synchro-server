@@ -5,6 +5,7 @@
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <QHash>
+#include <QDataStream>
 
 class Server : public QObject
 {
@@ -20,7 +21,7 @@ public:
     struct ClientObject
     {
         QTcpSocket *socket;
-        quint16 incomingSize;
+        QDataStream *in;
     };
 
     explicit Server(QObject *parent = nullptr);
