@@ -49,16 +49,22 @@ void Server::dataRecieved(int id)
     cliObj.in->startTransaction();
 
     quint16 incomingData;
+    quint8 extraFieldCount;
     quint8 numericCommand;
     QVariant additionalData;
-    *cliObj.in >> incomingData >> numericCommand >> additionalData;
+    *cliObj.in >> incomingData >> extraFieldCount >> numericCommand;
+
+    for (int i = extraFieldCount; i > 0; i--)
+    {
+        *cliObj.in >> additionalData;
+    }
 
     if (!cliObj.in->commitTransaction())
         return;
 
     auto command = static_cast<Command>(numericCommand);
 
-    qInfo() << "Recieved new data from" << id << ":" << command;
+    qInfo() << "Recieved new data from" << id << ":" << incomingData << extraFieldCount << command << additionalData;
 
     if (!additionalData.isNull() && additionalData.isValid())
         handleCommand(id, command, additionalData);
@@ -74,33 +80,24 @@ void Server::handleCommand(int issuerId, Command command, QVariant data)
 
     switch(command) {
     case Command::Pause: {
-        foreach (int id, clientList.keys())
-        {
-            if (issuerId == id)
-                continue;
-
-            dataBlockStream << quint8(Command::Pause);
-            dataBlockStream.device()->seek(0);
-            dataBlockStream << quint16(dataBlock.size() - static_cast<int>(sizeof(quint16)));
-
-            auto cliObj = clientList.value(id);
-            cliObj.socket->write(dataBlock);
-        }
+        dataBlockStream << quint8(0) << quint8(Command::Pause);
         break;
     }
     case Command::Seek: {
-        foreach (int id, clientList.keys())
-        {
-            if (issuerId == id)
-                continue;
-
-            dataBlockStream << quint8(Command::Pause) << data.toDouble();
-            dataBlockStream.device()->seek(0);
-            dataBlockStream << quint16(dataBlock.size() - static_cast<int>(sizeof(quint16)));
-
-            auto cliObj = clientList.value(id);
-            cliObj.socket->write(dataBlock);
-        }
+        dataBlockStream << quint8(1) << quint8(Command::Seek) << data;
+        break;
     }
+    }
+
+    dataBlockStream.device()->seek(0);
+    dataBlockStream << quint16(dataBlock.size() - static_cast<int>(sizeof(quint16)));
+
+    foreach (int id, clientList.keys())
+    {
+        if (issuerId == id)
+            continue;
+
+        auto cliObj = clientList.value(id);
+        cliObj.socket->write(dataBlock);
     }
 }
