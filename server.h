@@ -2,6 +2,7 @@
 #define SERVER_H
 
 #include <QObject>
+#include <QTcpServer>
 
 class Server : public QObject
 {
@@ -9,9 +10,14 @@ class Server : public QObject
 public:
     explicit Server(QObject *parent = nullptr);
 
+    void newClientConnected();
+
 signals:
 
 public slots:
+
+private:
+    QTcpServer *server;
 };
 
 #endif // SERVER_H
