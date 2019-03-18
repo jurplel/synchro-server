@@ -32,6 +32,8 @@ public:
 
     void dataRecieved(int id);
 
+    void handleCommand(Command command, int issuerId);
+
 signals:
 
 public slots:

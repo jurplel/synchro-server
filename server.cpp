@@ -16,13 +16,6 @@ Server::Server(QObject *parent) : QObject(parent)
 void Server::clientConnected()
 {
     auto socket = server->nextPendingConnection();
-    QByteArray dataBlock;
-    QDataStream dataBlockStream(&dataBlock, QIODevice::WriteOnly);
-    dataBlockStream << quint16(0) << quint8(Command::Pause);
-    dataBlockStream.device()->seek(0);
-    dataBlockStream << quint16(dataBlock.size() - static_cast<int>(sizeof(quint16)));
-
-    socket->write(dataBlock);
 
     //add client to clientlist
     ClientObject newClient;
@@ -65,4 +58,27 @@ void Server::dataRecieved(int id)
     auto command = static_cast<Command>(numericCommand);
 
     qInfo() << "Recieved new data from" << id << ":" << command;
+}
+
+void Server::handleCommand(Command command, int issuerId)
+{
+    switch(command) {
+    case Command::Pause: {
+        foreach (int id, clientList.keys())
+        {
+            if (issuerId == id)
+                continue;
+
+            QByteArray dataBlock;
+            QDataStream dataBlockStream(&dataBlock, QIODevice::WriteOnly);
+            dataBlockStream << quint16(0) << quint8(Command::Pause);
+            dataBlockStream.device()->seek(0);
+            dataBlockStream << quint16(dataBlock.size() - static_cast<int>(sizeof(quint16)));
+
+            auto cliObj = clientList.value(id);
+            cliObj.socket->write(dataBlock);
+        }
+        break;
+    }
+    }
 }
