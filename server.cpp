@@ -8,6 +8,8 @@ Server::Server(QObject *parent) : QObject(parent)
     nextClientId = 0;
 
     server->listen(QHostAddress::Any, 32019);
+    if (server->isListening())
+        qInfo() << "Server sucessfully started.";
     connect(server, &QTcpServer::newConnection, this, &Server::clientConnected);
 }
 
@@ -19,21 +21,21 @@ void Server::clientConnected()
     //add client to clientlist
     ClientObject newClient;
     newClient.socket = socket;
-    clientList.insert(nextClientId, newClient);
+
+    int id = nextClientId;
+    clientList.insert(id, newClient);
+    nextClientId++;
 
     //connect to discconection signal
-    connect(socket, &QTcpSocket::disconnected, this, [this]{ clientDisconnected(nextClientId); });
+    connect(socket, &QTcpSocket::disconnected, this, [this, id]{ clientDisconnected(id); });
 
     //console message
-    qInfo() << "Client " << nextClientId << " connected.";
-
-    //increase this value so the next assigned value is always different
-    nextClientId++;
+    qInfo() << "Client" << id << "connected.";
 }
 
 void Server::clientDisconnected(int id)
 {
     clientList.value(id).socket->deleteLater();
     clientList.remove(id);
-    qInfo() << "Client " << id << " disconnected.";
+    qInfo() << "Client" << id << "disconnected.";
 }
