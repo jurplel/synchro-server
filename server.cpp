@@ -83,7 +83,7 @@ void Server::handleCommand(int issuerId, Command command, QVariant data)
 
     switch(command) {
     case Command::Pause: {
-        dataBlockStream << quint8(0) << quint8(Command::Pause);
+        dataBlockStream << quint8(1) << quint8(Command::Pause) << data;
         break;
     }
     case Command::Seek: {
