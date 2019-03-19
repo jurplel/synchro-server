@@ -70,6 +70,9 @@ void Server::dataRecieved(int id)
         handleCommand(id, command, additionalData);
     else
         handleCommand(id, command);
+
+    if (!cliObj.in->atEnd())
+        dataRecieved(id);
 }
 
 void Server::handleCommand(int issuerId, Command command, QVariant data)
