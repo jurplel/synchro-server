@@ -49,30 +49,28 @@ void Server::dataRecieved(int id)
     cliObj.in->startTransaction();
 
     quint16 incomingData;
-    quint8 extraFieldCount;
+    bool hasArguments;
     quint8 numericCommand;
-    QVariantList additionalData;
-    *cliObj.in >> incomingData >> extraFieldCount >> numericCommand;
+    QVariantList arguments;
+    *cliObj.in >> incomingData >> hasArguments >> numericCommand;
 
-    if (extraFieldCount > 0)
-    {
-        *cliObj.in >> additionalData;
-    }
+    if (hasArguments)
+        *cliObj.in >> arguments;
 
     if (!cliObj.in->commitTransaction())
         return;
 
     auto command = static_cast<Command>(numericCommand);
 
-    qInfo() << "Recieved new data from" << id << ":" << incomingData << extraFieldCount << command << additionalData;
+    qInfo() << "Recieved new data from" << QString::number(id) + ":" << incomingData << hasArguments << command << arguments;
 
-    handleCommand(id, command, additionalData);
+    handleCommand(id, command, arguments);
 
     if (!cliObj.in->atEnd())
         dataRecieved(id);
 }
 
-void Server::handleCommand(int issuerId, Command command, QVariantList data)
+void Server::handleCommand(int issuerId, Command command, QVariantList arguments)
 {
     QByteArray dataBlock;
     QDataStream dataBlockStream(&dataBlock, QIODevice::WriteOnly);
@@ -80,11 +78,11 @@ void Server::handleCommand(int issuerId, Command command, QVariantList data)
 
     switch(command) {
     case Command::Pause: {
-        dataBlockStream << quint8(1) << quint8(Command::Pause) << data;
+        dataBlockStream << true << quint8(Command::Pause) << arguments;
         break;
     }
     case Command::Seek: {
-        dataBlockStream << quint8(2) << quint8(Command::Seek) << data;
+        dataBlockStream << true << quint8(Command::Seek) << arguments;
         break;
     }
     }
