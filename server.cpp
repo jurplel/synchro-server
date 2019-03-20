@@ -54,7 +54,7 @@ void Server::dataRecieved(int id)
     QVariantList additionalData;
     *cliObj.in >> incomingData >> extraFieldCount >> numericCommand;
 
-    for (int i = extraFieldCount; i > 0; i--)
+    if (extraFieldCount > 0)
     {
         *cliObj.in >> additionalData;
     }
