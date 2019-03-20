@@ -33,7 +33,7 @@ public:
 
     void dataRecieved(int id);
 
-    void handleCommand(int issuerId, Command command, QVariant data = QVariant());
+    void handleCommand(int issuerId, Command command, QVariantList data = QVariantList());
 
 signals:
 

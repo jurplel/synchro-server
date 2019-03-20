@@ -51,7 +51,7 @@ void Server::dataRecieved(int id)
     quint16 incomingData;
     quint8 extraFieldCount;
     quint8 numericCommand;
-    QVariant additionalData;
+    QVariantList additionalData;
     *cliObj.in >> incomingData >> extraFieldCount >> numericCommand;
 
     for (int i = extraFieldCount; i > 0; i--)
@@ -66,16 +66,13 @@ void Server::dataRecieved(int id)
 
     qInfo() << "Recieved new data from" << id << ":" << incomingData << extraFieldCount << command << additionalData;
 
-    if (!additionalData.isNull() && additionalData.isValid())
-        handleCommand(id, command, additionalData);
-    else
-        handleCommand(id, command);
+    handleCommand(id, command, additionalData);
 
     if (!cliObj.in->atEnd())
         dataRecieved(id);
 }
 
-void Server::handleCommand(int issuerId, Command command, QVariant data)
+void Server::handleCommand(int issuerId, Command command, QVariantList data)
 {
     QByteArray dataBlock;
     QDataStream dataBlockStream(&dataBlock, QIODevice::WriteOnly);
@@ -87,7 +84,7 @@ void Server::handleCommand(int issuerId, Command command, QVariant data)
         break;
     }
     case Command::Seek: {
-        dataBlockStream << quint8(1) << quint8(Command::Seek) << data;
+        dataBlockStream << quint8(2) << quint8(Command::Seek) << data;
         break;
     }
     }
