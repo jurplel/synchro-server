@@ -38,6 +38,10 @@ Thumbs.db
 # qtcreator generated files
 *.pro.user*
 
+# vscode generated files
+.vscode
+build
+
 # xemacs temporary files
 *.flc
 
