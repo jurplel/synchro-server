@@ -1,48 +1,47 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-#include <QObject>
-#include <QTcpServer>
-#include <QTcpSocket>
-#include <QHash>
-#include <QDataStream>
+#include <unordered_map>
+#include <memory>
 
-class Server : public QObject
+#include <asio/io_context.hpp>
+#include <asio/ip/tcp.hpp>
+
+class Server
 {
-    Q_OBJECT
 
 public:
-    enum class Command : quint8
+    enum class Command : uint8_t
     {
        Pause,
        Seek
     };
-    Q_ENUM(Command)
 
     struct ClientObject
     {
-        QTcpSocket *socket;
-        QDataStream *in;
+        std::shared_ptr<asio::ip::tcp::socket> socket;
+        // QDataStream *in;
     };
 
-    explicit Server(QObject *parent = nullptr);
+    Server(asio::io_context &io_ctx, unsigned short port);
 
-    void clientConnected();
+    void acceptClient();
 
-    void clientDisconnected(int id);
+    void receiveData(const int clientId, const int remainingDataToRead = 0);
 
-    void dataRecieved(int id);
+    void acceptConnection(std::error_code ec, asio::ip::tcp::socket socket);
 
-    void handleCommand(int issuerId, Command command, QVariantList arguments = QVariantList());
+    // void clientDisconnected(int id);
 
-signals:
+    // void dataRecieved(int id);
 
-public slots:
+    // void handleCommand(int issuerId, Command command, QVariantList arguments = QVariantList());
 
 private:
-    QTcpServer *server;
+    
+    asio::ip::tcp::acceptor synchroAcceptor;
 
-    QHash<int, ClientObject> clientList;
+    std::unordered_map<int, std::shared_ptr<asio::ip::tcp::socket>> clientList;
 
     int nextClientId;
 };
