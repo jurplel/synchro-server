@@ -2,9 +2,11 @@
 
 #include <iostream>
 #include <utility>
+#include <bitset>
+#include <cstdint>
 
 #include <asio/error.hpp>
-#include <asio/buffer.hpp>
+#include <asio/read.hpp>
 
 using asio::ip::tcp;
 
@@ -36,31 +38,31 @@ void Server::acceptClient()
         }
         else
         {
+            Client connectedClient;
+            connectedClient.socket = std::make_shared<tcp::socket>(std::move(socket));
             int id = nextClientId;
-            auto socketPointer = std::make_shared<tcp::socket>(std::move(socket));
-            clientList.insert({id, socketPointer});
+
+            clientList.insert({id, std::make_shared<Client>(std::move(connectedClient))});
             nextClientId++;
 
-            receiveData(id);
-
             std::cout << "Client " << id << " connected" << std::endl;
+
+            readHeader(id);
         }
 
         acceptClient();
     });
 }
 
-void Server::receiveData(const int clientId, const int remainingDataToRead)
+void Server::readHeader(const int &clientId)
 {
-    char data[1024];
-    auto buffer = asio::buffer(data, 1024);
+    auto client = clientList[clientId];
+    if (!client->socket)
+        throw std::runtime_error("Client " + std::to_string(clientId) + " missing socket");
 
-    clientList[clientId]->async_receive(buffer, 
-    [this, clientId, remainingDataToRead](const std::error_code& ec, std::size_t bytesTransferred)
+    asio::async_read(*client->socket, asio::buffer(client->data, 27), 
+    [this, clientId](const std::error_code& ec, std::size_t bytesTransferred)
     {
-
-        int newRemainingDataToRead = 0;
-
         if (ec)
         {
             if ((asio::error::eof == ec) || (asio::error::connection_reset == ec))
@@ -75,9 +77,12 @@ void Server::receiveData(const int clientId, const int remainingDataToRead)
         else
         {
             std::cout << "Recieved " << bytesTransferred << " bytes" << std::endl;
+            
+            for(int i = 0; i < 35; i++)
+                std::cout << "i: " << i << " - " << std::bitset<8>(clientList[clientId]->data[i]) << std::endl;
         }
 
-        receiveData(clientId, newRemainingDataToRead);
+        readHeader(clientId);
     });
 }
 

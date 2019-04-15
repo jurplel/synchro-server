@@ -7,6 +7,13 @@
 #include <asio/io_context.hpp>
 #include <asio/ip/tcp.hpp>
 
+class Client
+{
+    public: 
+        std::shared_ptr<asio::ip::tcp::socket> socket;
+        std::array<char, 35> data = {};
+};
+
 class Server
 {
 
@@ -17,17 +24,11 @@ public:
        Seek
     };
 
-    struct ClientObject
-    {
-        std::shared_ptr<asio::ip::tcp::socket> socket;
-        // QDataStream *in;
-    };
-
     Server(asio::io_context &io_ctx, unsigned short port);
 
     void acceptClient();
 
-    void receiveData(const int clientId, const int remainingDataToRead = 0);
+    void readHeader(const int &clientId);
 
     void acceptConnection(std::error_code ec, asio::ip::tcp::socket socket);
 
@@ -41,7 +42,7 @@ private:
     
     asio::ip::tcp::acceptor synchroAcceptor;
 
-    std::unordered_map<int, std::shared_ptr<asio::ip::tcp::socket>> clientList;
+    std::unordered_map<int, std::shared_ptr<Client>> clientList;
 
     int nextClientId;
 };
